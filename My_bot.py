@@ -4,6 +4,7 @@ import os
 
 # 🔑 Get token from environment (Render)
 TELEGRAM_TOKEN = os.getenv("8651088811:AAFDVOpScTvK7pzs_No2cp-YUFh2GbpcsOw")
+print("TOKEN:", TELEGRAM_TOKEN)
 
 # 🚨 Safety check (very important)
 if not TELEGRAM_TOKEN:
