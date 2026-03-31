@@ -25,11 +25,11 @@ def ask_ai(prompt):
                 "Content-Type": "application/json"
             },
             json={
-                "model": "mistralai/mistral-7b-instruct",  # 🔥 reliable free model
+                "model": "openrouter/auto",  # 🔥 safest option
                 "messages": [
                     {"role": "system", "content": "You are a helpful AI assistant."},
                     {"role": "user", "content": prompt}
-                ]
+                ],
             }
         )
 
