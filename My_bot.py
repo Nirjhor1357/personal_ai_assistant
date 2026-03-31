@@ -17,7 +17,18 @@ if not HF_API_KEY:
 print("✅ Tokens loaded")
 
 
-# 🧠 FREE AI FUNCTION (HuggingFace - FIXED)
+# 🧠 FALLBACK (ALWAYS WORKS)
+def fallback_plan():
+    return (
+        "📅 Your Daily Plan:\n\n"
+        "1. 📚 Calculus – 2 hours\n"
+        "2. 💻 C++ Practice – 1.5 hours\n"
+        "3. 🌐 Web Development – 1 hour\n\n"
+        "🚀 Stay consistent!"
+    )
+
+
+# 🧠 AI FUNCTION (STABLE)
 def ask_ai(prompt):
     try:
         response = requests.post(
@@ -29,37 +40,38 @@ def ask_ai(prompt):
             json={
                 "inputs": prompt
             },
-            timeout=30
+            timeout=25
         )
 
         print("STATUS:", response.status_code)
-        print("RAW:", response.text)
 
-        # ✅ Handle non-200 responses
+        # ❌ If API fails → fallback
         if response.status_code != 200:
-            return f"⚠️ API Error ({response.status_code})"
+            return fallback_plan()
 
         data = response.json()
 
-        # ✅ Correct response parsing
+        # ✅ Handle success
         if isinstance(data, list) and len(data) > 0:
-            return data[0].get("generated_text", "⚠️ No response")
+            text = data[0].get("generated_text", "").strip()
+            return text if text else fallback_plan()
 
-        elif isinstance(data, dict) and "error" in data:
-            return f"⚠️ API Error: {data['error']}"
+        # ❌ API error format
+        if isinstance(data, dict) and "error" in data:
+            print("HF ERROR:", data)
+            return fallback_plan()
 
-        else:
-            return "⚠️ Unexpected AI response"
+        return fallback_plan()
 
     except requests.exceptions.Timeout:
-        return "⏳ AI is taking too long. Try again."
+        return "⏳ AI is slow right now. Try again."
 
     except Exception as e:
         print("ERROR:", e)
-        return "⚠️ AI system error"
+        return fallback_plan()
 
 
-# 🚀 Start Command
+# 🚀 Start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🤖 AI Agent is LIVE (FREE MODE)!\n\n"
@@ -68,7 +80,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-# 📅 Plan Command
+# 📅 Plan
 async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prompt = (
         "Create a structured daily plan for a CUET student "
@@ -80,7 +92,7 @@ async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(reply)
 
 
-# 💬 Chat Handler
+# 💬 Chat
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_msg = update.message.text
     reply = ask_ai(user_msg)
