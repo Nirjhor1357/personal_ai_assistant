@@ -3,7 +3,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 import os
 
 # 🔑 Get token from environment (Render)
-TELEGRAM_TOKEN = os.getenv("8651088811:AAFDVOpScTvK7pzs_No2cp-YUFh2GbpcsOw")
+TELEGRAM_TOKEN = os.getenv("8651088811:AAFdHlruZCumWdrLbwXwgUxwhZEzWvStkKQ")
 print("TOKEN:", TELEGRAM_TOKEN)
 
 # 🚨 Safety check (very important)
