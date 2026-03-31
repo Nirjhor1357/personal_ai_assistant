@@ -1,59 +1,43 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
-import requests
-
-# 🔑 Your Telegram Bot Token
 import os
-TELEGRAM_TOKEN = os.getenv("8651088811:AAFce9S34eHp7tKwWqRGvEjZkqDubuAGpTs")
 
-# 🧠 Local AI Function (Ollama)
-def ask_local_ai(prompt):
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "llama3",
-            "prompt": prompt,
-            "stream": False
-        }
-    )
-    return response.json()["response"]
+# 🔑 Get token from environment (Render)
+TELEGRAM_TOKEN = os.getenv("8651088811:AAFDVOpScTvK7pzs_No2cp-YUFh2GbpcsOw")
+
+# 🚨 Safety check (very important)
+if not TELEGRAM_TOKEN:
+    raise ValueError("❌ TELEGRAM_TOKEN is not set in environment variables!")
+
+print("✅ Token loaded successfully")
 
 # 🚀 Start Command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🤖 Your Personal AI Agent is LIVE!\nUse /plan to start your day.")
+    await update.message.reply_text(
+        "🤖 Your Personal AI Agent is LIVE!\n\n"
+        "Commands:\n"
+        "/plan → Get your daily plan\n"
+        "/start → Restart bot"
+    )
 
 # 📅 Plan Command
 async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    prompt = """
-You are my Personal AI Agent.
+    await update.message.reply_text(
+        "📅 Your plan for today:\n\n"
+        "1. 📚 Study Calculus (2h)\n"
+        "2. 💻 Practice C++ (1.5h)\n"
+        "3. 🌐 Work on Web Dev (1h)\n\n"
+        "🚀 Stay focused!"
+    )
 
-I am a Mechatronics student at CUET.
-I am learning C++, Web Development, and Calculus.
-I want to freelance and go abroad for MS.
-
-Create a clear, structured daily plan with priorities.
-Keep it practical and realistic.
-"""
-
-    reply = "🤖 AI is temporarily disabled (hosting test successful!)"
-    await update.message.reply_text(reply)
-
-# 💬 Chat Handler
+# 💬 Chat Handler (disabled for hosted version)
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_msg = update.message.text
+    await update.message.reply_text(
+        "🤖 AI chat is currently disabled on hosted version.\n"
+        "Local AI will be added later."
+    )
 
-    prompt = f"""
-You are my Personal AI Agent.
-
-User message: {user_msg}
-
-Give a helpful, clear, and practical response.
-"""
-
-    reply = ask_local_ai(prompt)
-    await update.message.reply_text(reply)
-
-# ▶️ Run Bot
+# ▶️ Build and run bot
 app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
