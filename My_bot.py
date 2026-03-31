@@ -17,23 +17,38 @@ print("✅ Tokens loaded")
 
 # 🧠 AI Function
 def ask_ai(prompt):
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "openrouter/auto",
-            "messages": [
-                {"role": "system", "content": "You are a smart personal AI assistant helping a CUET student."},
-                {"role": "user", "content": prompt}
-            ]
-        }
-    )
+    try:
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "mistralai/mistral-7b-instruct",  # 🔥 reliable free model
+                "messages": [
+                    {"role": "system", "content": "You are a helpful AI assistant."},
+                    {"role": "user", "content": prompt}
+                ]
+            }
+        )
 
-    data = response.json()
-    return data["choices"][0]["message"]["content"]
+        print("STATUS:", response.status_code)
+        print("RAW:", response.text)
+
+        data = response.json()
+
+        # ✅ SAFE parsing
+        if "choices" in data:
+            return data["choices"][0]["message"]["content"]
+        elif "error" in data:
+            return f"⚠️ API Error: {data['error']}"
+        else:
+            return "⚠️ Unexpected response from AI"
+
+    except Exception as e:
+        print("ERROR:", e)
+        return "⚠️ AI system error"
 
 # 🚀 Start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
