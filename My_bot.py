@@ -2,11 +2,11 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import os
 
-# 🔑 Get token from environment (Render)
-TELEGRAM_TOKEN = os.getenv("8651088811:AAFdHlruZCumWdrLbwXwgUxwhZEzWvStkKQ")
+# 🔑 Correct way
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 print("TOKEN:", TELEGRAM_TOKEN)
 
-# 🚨 Safety check (very important)
+# 🚨 Safety check
 if not TELEGRAM_TOKEN:
     raise ValueError("❌ TELEGRAM_TOKEN is not set in environment variables!")
 
@@ -31,14 +31,14 @@ async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🚀 Stay focused!"
     )
 
-# 💬 Chat Handler (disabled for hosted version)
+# 💬 Chat Handler
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🤖 AI chat is currently disabled on hosted version.\n"
         "Local AI will be added later."
     )
 
-# ▶️ Build and run bot
+# ▶️ Run bot
 app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
