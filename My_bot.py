@@ -21,9 +21,9 @@ print("✅ Tokens loaded")
 def ask_ai(prompt):
     try:
         response = requests.post(
-            "https://api-inference.huggingface.co/models/google/flan-t5-large",
+            "https://router.huggingface.co/hf-inference/models/google/flan-t5-large",
             headers={
-                "Authorization": f"Bearer {HF_API_KEY}"
+                "Authorization": f"Bearer {os.getenv('HF_API_KEY')}"
             },
             json={
                 "inputs": prompt
