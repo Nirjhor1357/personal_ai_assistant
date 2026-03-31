@@ -1,42 +1,56 @@
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import os
+import requests
 
-# 🔑 Correct way
+# 🔑 Tokens
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-print("TOKEN:", TELEGRAM_TOKEN)
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 # 🚨 Safety check
 if not TELEGRAM_TOKEN:
-    raise ValueError("❌ TELEGRAM_TOKEN is not set in environment variables!")
+    raise ValueError("❌ TELEGRAM_TOKEN missing")
+if not OPENROUTER_API_KEY:
+    raise ValueError("❌ OPENROUTER_API_KEY missing")
 
-print("✅ Token loaded successfully")
+print("✅ Tokens loaded")
 
-# 🚀 Start Command
+# 🧠 AI Function
+def ask_ai(prompt):
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "openrouter/auto",
+            "messages": [
+                {"role": "system", "content": "You are a smart personal AI assistant helping a CUET student."},
+                {"role": "user", "content": prompt}
+            ]
+        }
+    )
+
+    data = response.json()
+    return data["choices"][0]["message"]["content"]
+
+# 🚀 Start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🤖 Your Personal AI Agent is LIVE!\n\n"
-        "Commands:\n"
-        "/plan → Get your daily plan\n"
-        "/start → Restart bot"
-    )
+    await update.message.reply_text("🤖 AI Agent is LIVE!\nUse /plan or just chat.")
 
-# 📅 Plan Command
+# 📅 Plan
 async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "📅 Your plan for today:\n\n"
-        "1. 📚 Study Calculus (2h)\n"
-        "2. 💻 Practice C++ (1.5h)\n"
-        "3. 🌐 Work on Web Dev (1h)\n\n"
-        "🚀 Stay focused!"
+    reply = ask_ai(
+        "Create a structured daily plan for a CUET student studying Calculus, C++, and Web Development."
     )
+    await update.message.reply_text(reply)
 
-# 💬 Chat Handler
+# 💬 Chat
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🤖 AI chat is currently disabled on hosted version.\n"
-        "Local AI will be added later."
-    )
+    user_msg = update.message.text
+    reply = ask_ai(user_msg)
+    await update.message.reply_text(reply)
 
 # ▶️ Run bot
 app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
