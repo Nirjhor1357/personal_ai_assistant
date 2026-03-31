@@ -17,52 +17,70 @@ if not HF_API_KEY:
 print("✅ Tokens loaded")
 
 
-# 🧠 FREE AI FUNCTION (HuggingFace)
+# 🧠 FREE AI FUNCTION (HuggingFace - FIXED)
 def ask_ai(prompt):
     try:
         response = requests.post(
             "https://router.huggingface.co/hf-inference/models/google/flan-t5-large",
             headers={
-                "Authorization": f"Bearer {os.getenv('HF_API_KEY')}"
+                "Authorization": f"Bearer {HF_API_KEY}",
+                "Content-Type": "application/json"
             },
             json={
                 "inputs": prompt
-            }
+            },
+            timeout=30
         )
 
         print("STATUS:", response.status_code)
         print("RAW:", response.text)
 
+        # ✅ Handle non-200 responses
+        if response.status_code != 200:
+            return f"⚠️ API Error ({response.status_code})"
+
         data = response.json()
 
-        if isinstance(data, list):
+        # ✅ Correct response parsing
+        if isinstance(data, list) and len(data) > 0:
             return data[0].get("generated_text", "⚠️ No response")
+
+        elif isinstance(data, dict) and "error" in data:
+            return f"⚠️ API Error: {data['error']}"
+
         else:
-            return f"⚠️ API Error: {data}"
+            return "⚠️ Unexpected AI response"
+
+    except requests.exceptions.Timeout:
+        return "⏳ AI is taking too long. Try again."
 
     except Exception as e:
         print("ERROR:", e)
         return "⚠️ AI system error"
 
 
-# 🚀 Start
+# 🚀 Start Command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🤖 AI Agent is LIVE (FREE MODE)!\n\n"
         "/plan → Daily plan\n"
-        "Or just chat 💬"
+        "Or just send a message 💬"
     )
 
 
-# 📅 Plan
+# 📅 Plan Command
 async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    reply = ask_ai(
-        "Create a structured daily plan for a CUET student studying Calculus, C++, and Web Development."
+    prompt = (
+        "Create a structured daily plan for a CUET student "
+        "studying Calculus, C++, and Web Development. "
+        "Make it practical with time blocks."
     )
+
+    reply = ask_ai(prompt)
     await update.message.reply_text(reply)
 
 
-# 💬 Chat
+# 💬 Chat Handler
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_msg = update.message.text
     reply = ask_ai(user_msg)
@@ -81,5 +99,6 @@ def main():
     app.run_polling()
 
 
+# ▶️ Run
 if __name__ == "__main__":
     main()
