@@ -2,7 +2,23 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import os
 import requests
+import json
 
+MEMORY_FILE = "memory.json"
+
+
+def load_memory():
+    try:
+        with open(MEMORY_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return {}
+
+
+def save_memory(data):
+    with open(MEMORY_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+        
 # 🔑 Tokens
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 HF_API_KEY = os.getenv("HF_API_KEY")
@@ -94,11 +110,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # 📅 Plan
 async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    prompt = (
-        "Create a structured daily plan for a CUET student "
-        "studying Calculus, C++, and Web Development. "
-        "Make it practical with time blocks."
-    )
+    user_id = str(update.message.from_user.id)
+    memory = load_memory()
+
+    user_data = memory.get(user_id, {})
+
+    goal = user_data.get("goal", "be productive")
+    last_focus = user_data.get("last_focus", "nothing yet")
+
+    prompt = f"""
+User goal: {goal}
+Last focus: {last_focus}
+
+Create a structured daily plan.
+"""
 
     reply = ask_ai(prompt)
     await update.message.reply_text(reply)
@@ -106,10 +131,42 @@ async def plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # 💬 Chat
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.message.from_user.id)
     user_msg = update.message.text
+
+    memory = load_memory()
+
+    # 🧠 Initialize user
+    if user_id not in memory:
+        memory[user_id] = {}
+
+    # 🧠 Save last message
+    memory[user_id]["last_message"] = user_msg
+
+    save_memory(memory)
+
     reply = ask_ai(user_msg)
     await update.message.reply_text(reply)
+    
+# ▶️ Set Goal
+async def setgoal(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.message.from_user.id)
+    goal_text = " ".join(context.args)
 
+    if not goal_text:
+        await update.message.reply_text("❗ Usage: /setgoal your_goal_here")
+        return
+
+    memory = load_memory()
+
+    if user_id not in memory:
+        memory[user_id] = {}
+
+    memory[user_id]["goal"] = goal_text
+
+    save_memory(memory)
+
+    await update.message.reply_text(f"🎯 Goal saved: {goal_text}")
 
 # ▶️ Main
 def main():
@@ -118,7 +175,8 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("plan", plan))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
-
+    app.add_handler(CommandHandler("setgoal", setgoal))
+    
     print("🤖 Bot is running...")
     app.run_polling()
 
