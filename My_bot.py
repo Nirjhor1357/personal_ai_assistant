@@ -18,14 +18,26 @@ print("✅ Tokens loaded")
 
 
 # 🧠 FALLBACK (ALWAYS WORKS)
-def fallback_plan():
-    return (
-        "📅 Your Daily Plan:\n\n"
-        "1. 📚 Calculus – 2 hours\n"
-        "2. 💻 C++ Practice – 1.5 hours\n"
-        "3. 🌐 Web Development – 1 hour\n\n"
-        "🚀 Stay consistent!"
-    )
+def smart_fallback(prompt):
+    prompt = prompt.lower()
+
+    if "plan" in prompt:
+        return (
+            "📅 Your Daily Plan:\n\n"
+            "1. 📚 Calculus - 2 hours\n"
+            "2. 💻 C++ Practice - 1.5 hours\n"
+            "3. 🌐 Web Development - 1 hour\n\n"
+            "🚀 Stay consistent!"
+        )
+
+    elif "focus" in prompt:
+        return "🎯 Focus on Calculus first. It has the highest impact right now."
+
+    elif "hi" in prompt or "hello" in prompt:
+        return "👋 Hey! I'm your AI Agent. Use /plan or ask me anything."
+
+    else:
+        return "🤖 I'm having trouble with AI right now, but I'm still here to help!"
 
 
 # 🧠 AI FUNCTION (STABLE)
@@ -47,28 +59,28 @@ def ask_ai(prompt):
 
         # ❌ If API fails → fallback
         if response.status_code != 200:
-            return fallback_plan()
+            return smart_fallback(prompt)
 
         data = response.json()
 
         # ✅ Handle success
         if isinstance(data, list) and len(data) > 0:
             text = data[0].get("generated_text", "").strip()
-            return text if text else fallback_plan()
+            return text if text else smart_fallback(prompt)
 
         # ❌ API error format
         if isinstance(data, dict) and "error" in data:
             print("HF ERROR:", data)
-            return fallback_plan()
+            return smart_fallback(prompt)
 
-        return fallback_plan()
+        return smart_fallback(prompt)
 
     except requests.exceptions.Timeout:
         return "⏳ AI is slow right now. Try again."
 
     except Exception as e:
         print("ERROR:", e)
-        return fallback_plan()
+        return smart_fallback(prompt)
 
 
 # 🚀 Start
