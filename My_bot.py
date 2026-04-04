@@ -127,26 +127,39 @@ Create a structured daily plan.
 
     reply = ask_ai(prompt)
     await update.message.reply_text(reply)
-
+    memory[user_id]["last_focus"] = "Calculus"
+    save_memory(memory)
 
 # 💬 Chat
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.from_user.id)
-    user_msg = update.message.text
+    user_msg = update.message.text.lower()
 
     memory = load_memory()
+    user_data = memory.get(user_id, {})
 
-    # 🧠 Initialize user
+    # 🧠 Direct memory responses
+    if "my goal" in user_msg:
+        goal = user_data.get("goal", "You haven't set a goal yet.")
+        await update.message.reply_text(f"🎯 Your goal: {goal}")
+        return
+
+    if "my focus" in user_msg:
+        focus = user_data.get("last_focus", "No focus set yet.")
+        await update.message.reply_text(f"🎯 Last focus: {focus}")
+        return
+
+    # 🧠 Save last message
     if user_id not in memory:
         memory[user_id] = {}
 
-    # 🧠 Save last message
     memory[user_id]["last_message"] = user_msg
-
     save_memory(memory)
 
+    # 🤖 AI or fallback
     reply = ask_ai(user_msg)
     await update.message.reply_text(reply)
+    
     
 # ▶️ Set Goal
 async def setgoal(update: Update, context: ContextTypes.DEFAULT_TYPE):
